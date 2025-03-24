@@ -31,3 +31,8 @@ export function getSearchParams(searchAPI: SearchAPI, searchAPIConfig: Record<st
   })
   return filteredConfig
 }
+
+export function selectAndExecuteSearch(searchAPI: SearchAPI, queryList: string[], searchParams: Record<string, any>) {
+  // Use searchParams to execute search with searchAPI
+  // ...
+}
