@@ -1,5 +1,5 @@
-import { RunnableConfig } from "@langchain/core/runnables";
-import { Annotation } from "@langchain/langgraph";
+import type { RunnableConfig } from '@langchain/core/runnables'
+import { Annotation } from '@langchain/langgraph'
 
 const DEFAULT_REPORT_STRUCTURE = `Use this structure to create a report on the user-provided topic:
 
@@ -15,14 +15,14 @@ const DEFAULT_REPORT_STRUCTURE = `Use this structure to create a report on the u
 `
 
 export enum SearchAPI {
-  PERPLEXITY = "perplexity",
-  TAVILY = "tavily",
-  EXA = "exa",
-  ARXIV = "arxiv",
-  PUBMED = "pubmed",
-  LINKUP = "linkup",
-  DUCKDUCKGO = "duckduckgo",
-  GOOGLESEARCH = "googlesearch"
+  PERPLEXITY = 'perplexity',
+  TAVILY = 'tavily',
+  EXA = 'exa',
+  ARXIV = 'arxiv',
+  PUBMED = 'pubmed',
+  LINKUP = 'linkup',
+  DUCKDUCKGO = 'duckduckgo',
+  GOOGLESEARCH = 'googlesearch',
 }
 
 export const DeepResearchConfiguration = Annotation.Root({
@@ -77,11 +77,11 @@ export function ensureDeepResearchConfiguration(config: RunnableConfig): typeof 
     report_structure: configurable.report_structure || DEFAULT_REPORT_STRUCTURE,
     number_of_queries: configurable.number_of_queries || 2,
     max_search_depth: configurable.max_search_depth || 2,
-    planner_provider: configurable.planner_provider || "anthropic",
-    planner_model: configurable.planner_model || "claude-3-7-sonnet-latest",
-    writer_provider: configurable.writer_provider || "anthropic",
-    writer_model: configurable.writer_model || "claude-3-5-sonnet-latest",
+    planner_provider: configurable.planner_provider || 'anthropic',
+    planner_model: configurable.planner_model || 'claude-3-7-sonnet-latest',
+    writer_provider: configurable.writer_provider || 'anthropic',
+    writer_model: configurable.writer_model || 'claude-3-5-sonnet-latest',
     search_api: configurable.search_api || SearchAPI.TAVILY,
-    search_api_config: configurable.search_api_config || {}
+    search_api_config: configurable.search_api_config || {},
   }
 }

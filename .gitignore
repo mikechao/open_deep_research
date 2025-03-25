@@ -24,3 +24,5 @@ logs
 !.env.example
 
 notes.txt
+# LangGraph API
+.langgraph_api

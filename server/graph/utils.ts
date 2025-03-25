@@ -1,18 +1,19 @@
-import { SearchAPI } from "./configuration";
-import { consola } from 'consola';
-import { tavily, TavilySearchResponse } from '@tavily/core'
+import type { TavilySearchResponse } from '@tavily/core'
+import { tavily } from '@tavily/core'
+import { consola } from 'consola'
+import { SearchAPI } from './configuration'
 
 export function getSearchParams(searchAPI: SearchAPI, searchAPIConfig: Record<string, any>) {
   // Define accepted parameters for each search API
   const SEARCH_API_PARAMS: Record<SearchAPI, string[]> = {
-      [SearchAPI.EXA]: ["max_characters", "num_results", "include_domains", "exclude_domains", "subpages"],
-      [SearchAPI.TAVILY]: [],  // Tavily currently accepts no additional parameters
-      [SearchAPI.PERPLEXITY]: [],  // Perplexity accepts no additional parameters
-      [SearchAPI.ARXIV]: ["load_max_docs", "get_full_documents", "load_all_available_meta"],
-      [SearchAPI.PUBMED]: ["top_k_results", "email", "api_key", "doc_content_chars_max"],
-      [SearchAPI.LINKUP]: ["depth"],
-      [SearchAPI.DUCKDUCKGO]: [],
-      [SearchAPI.GOOGLESEARCH]: [],
+    [SearchAPI.EXA]: ['max_characters', 'num_results', 'include_domains', 'exclude_domains', 'subpages'],
+    [SearchAPI.TAVILY]: [], // Tavily currently accepts no additional parameters
+    [SearchAPI.PERPLEXITY]: [], // Perplexity accepts no additional parameters
+    [SearchAPI.ARXIV]: ['load_max_docs', 'get_full_documents', 'load_all_available_meta'],
+    [SearchAPI.PUBMED]: ['top_k_results', 'email', 'api_key', 'doc_content_chars_max'],
+    [SearchAPI.LINKUP]: ['depth'],
+    [SearchAPI.DUCKDUCKGO]: [],
+    [SearchAPI.GOOGLESEARCH]: [],
   }
 
   const isEmpty = Object.keys(searchAPIConfig).length === 0
@@ -21,9 +22,9 @@ export function getSearchParams(searchAPI: SearchAPI, searchAPIConfig: Record<st
   }
   // Make sure searchAPI is a valid key in our params object
   if (!(searchAPI in SEARCH_API_PARAMS)) {
-    return {}; // Or handle invalid search API appropriately
+    return {} // Or handle invalid search API appropriately
   }
-    
+
   const acceptedParams = SEARCH_API_PARAMS[searchAPI]
   const filteredConfig: Record<string, any> = {}
   Object.keys(searchAPIConfig).forEach((key) => {
@@ -37,50 +38,50 @@ export function getSearchParams(searchAPI: SearchAPI, searchAPIConfig: Record<st
 export async function selectAndExecuteSearch(searchAPI: SearchAPI, queryList: string[], searchParams: Record<string, any>) {
   switch (searchAPI) {
     case SearchAPI.EXA:
-      console.log("Executing EXA search with params:", searchParams)
+      console.log('Executing EXA search with params:', searchParams)
       return executeExaSearch(queryList, searchParams)
-      
+
     case SearchAPI.TAVILY:
-      console.log("Executing Tavily search with params:", searchParams)
+      console.log('Executing Tavily search with params:', searchParams)
       const searchResults = await executeTavilySearch(queryList, searchParams)
       const deduplicatedResults = deduplicateSources(searchResults)
       const formattedSources = formatSource(deduplicatedResults, true, 4000)
       return formattedSources
-      
+
     case SearchAPI.PERPLEXITY:
-      console.log("Executing Perplexity search with params:", searchParams);
-      return executePerplexitySearch(queryList, searchParams);
-      
+      console.log('Executing Perplexity search with params:', searchParams)
+      return executePerplexitySearch(queryList, searchParams)
+
     case SearchAPI.ARXIV:
-      console.log("Executing ArXiv search with params:", searchParams);
-      return executeArxivSearch(queryList, searchParams);
-      
+      console.log('Executing ArXiv search with params:', searchParams)
+      return executeArxivSearch(queryList, searchParams)
+
     case SearchAPI.PUBMED:
-      console.log("Executing PubMed search with params:", searchParams);
-      return executePubmedSearch(queryList, searchParams);
-      
+      console.log('Executing PubMed search with params:', searchParams)
+      return executePubmedSearch(queryList, searchParams)
+
     case SearchAPI.LINKUP:
-      console.log("Executing LinkUp search with params:", searchParams);
-      return executeLinkupSearch(queryList, searchParams);
-      
+      console.log('Executing LinkUp search with params:', searchParams)
+      return executeLinkupSearch(queryList, searchParams)
+
     case SearchAPI.DUCKDUCKGO:
-      console.log("Executing DuckDuckGo search with params:", searchParams);
-      return executeDuckDuckGoSearch(queryList, searchParams);
-      
+      console.log('Executing DuckDuckGo search with params:', searchParams)
+      return executeDuckDuckGoSearch(queryList, searchParams)
+
     case SearchAPI.GOOGLESEARCH:
-      console.log("Executing Google search with params:", searchParams);
-      return executeGoogleSearch(queryList, searchParams);
-      
+      console.log('Executing Google search with params:', searchParams)
+      return executeGoogleSearch(queryList, searchParams)
+
     default:
-      console.error(`Unsupported search API: ${searchAPI}`);
-      throw new Error(`Unsupported search API: ${searchAPI}`);
+      console.error(`Unsupported search API: ${searchAPI}`)
+      throw new Error(`Unsupported search API: ${searchAPI}`)
   }
 }
 
 function executeExaSearch(queries: string[], params: Record<string, any>) {
   // Implement Exa search
-  consola.error(`Exa search not implemented yet. Called with queries: ${queries} and params: ${params}`);
-  throw new Error("Exa search not implemented yet.");
+  consola.error(`Exa search not implemented yet. Called with queries: ${queries} and params: ${params}`)
+  throw new Error('Exa search not implemented yet.')
 }
 
 async function executeTavilySearch(queries: string[], _params: Record<string, any>): Promise<TavilySearchResponse[]> {
@@ -93,50 +94,51 @@ async function executeTavilySearch(queries: string[], _params: Record<string, an
       searchTasks.push(tavilyClient.search(query, {
         maxResults: 5,
         includeRawContent: true,
-        topic: "general",
+        topic: 'general',
       }))
     }
     const searchResults = await Promise.all(searchTasks)
     return searchResults
-  } catch (error) {
-    consola.error("Error executing Tavily search:", error)
+  }
+  catch (error) {
+    consola.error('Error executing Tavily search:', error)
     return []
   }
 }
 
 function executePerplexitySearch(queries: string[], params: Record<string, any>) {
-  consola.error(`Perplexity search not implemented yet. Called with queries: ${queries} and params: ${params}`);
-  throw new Error("Perplexity search not implemented yet.");
+  consola.error(`Perplexity search not implemented yet. Called with queries: ${queries} and params: ${params}`)
+  throw new Error('Perplexity search not implemented yet.')
 }
 
 function executeArxivSearch(queries: string[], params: Record<string, any>) {
   // Implement ArXiv search
-  consola.error(`ArXiv search not implemented yet. Called with queries: ${queries} and params: ${params}`);
-  throw new Error("ArXiv search not implemented yet.");
+  consola.error(`ArXiv search not implemented yet. Called with queries: ${queries} and params: ${params}`)
+  throw new Error('ArXiv search not implemented yet.')
 }
 
 function executePubmedSearch(queries: string[], params: Record<string, any>) {
   // Implement PubMed search
-  consola.error(`PubMed search not implemented yet. Called with queries: ${queries} and params: ${params}`);
-  throw new Error("PubMed search not implemented yet.");
+  consola.error(`PubMed search not implemented yet. Called with queries: ${queries} and params: ${params}`)
+  throw new Error('PubMed search not implemented yet.')
 }
 
 function executeLinkupSearch(queries: string[], params: Record<string, any>) {
   // Implement LinkUp search
-  consola.error(`LinkUp search not implemented yet. Called with queries: ${queries} and params: ${params}`);
-  throw new Error("LinkUp search not implemented yet.");
+  consola.error(`LinkUp search not implemented yet. Called with queries: ${queries} and params: ${params}`)
+  throw new Error('LinkUp search not implemented yet.')
 }
 
 function executeDuckDuckGoSearch(queries: string[], params: Record<string, any>) {
   // Implement DuckDuckGo search
-  consola.error(`DuckDuckGo search not implemented yet. Called with queries: ${queries} and params: ${params}`);
-  throw new Error("DuckDuckGo search not implemented yet.");
+  consola.error(`DuckDuckGo search not implemented yet. Called with queries: ${queries} and params: ${params}`)
+  throw new Error('DuckDuckGo search not implemented yet.')
 }
 
 function executeGoogleSearch(queries: string[], params: Record<string, any>) {
   // Implement Google search
-  consola.error(`Google search not implemented yet. Called with queries: ${queries} and params: ${params}`);
-  throw new Error("Google search not implemented yet.");
+  consola.error(`Google search not implemented yet. Called with queries: ${queries} and params: ${params}`)
+  throw new Error('Google search not implemented yet.')
 }
 
 /**
