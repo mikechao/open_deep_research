@@ -2,6 +2,7 @@ import type { RunnableConfig } from '@langchain/core/runnables'
 import type { ReportState } from './state'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { PromptTemplate } from '@langchain/core/prompts'
+import { Command, interrupt, Send } from '@langchain/langgraph'
 import { initChatModel } from 'langchain/chat_models/universal'
 import { ensureDeepResearchConfiguration } from './configuration'
 import { report_planner_instructions, report_planner_query_writer_instructions } from './prompts'
@@ -10,12 +11,12 @@ import { getSearchParams, selectAndExecuteSearch } from './utils'
 
 /**
  * Generate the initial report plan with sections.
-    This node:
-    1. Gets configuration for the report structure and search parameters
-    2. Generates search queries to gather context for planning
-    3. Performs web searches using those queries
-    4. Uses an LLM to generate a structured plan with sections
-
+ * This node:
+ * 1. Gets configuration for the report structure and search parameters
+ * 2. Generates search queries to gather context for planning
+ * 3. Performs web searches using those queries
+ * 4. Uses an LLM to generate a structured plan with sections
+ *
  * @param state Current graph state containing the report topic
  * @param config Configuration for models, search APIs, etc.
  */
@@ -75,4 +76,48 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
 
   const sections = reportSections.sections
   return { sections }
+}
+
+/**
+ * Get human feedback on the report plan and route to next steps.
+ * This node:
+    1. Formats the current report plan for human review
+    2. Gets feedback via an interrupt
+    3. Routes to either:
+       - Section writing if plan is approved
+       - Plan regeneration if feedback is provided
+ * @param state Current graph state with sections to review
+ * @param _config Configuration for the workflow
+ */
+function humanFeedback(state: typeof ReportState.State, _config: RunnableConfig) {
+  const topic = state.topic
+  const sections = state.sections
+  const sectionsStr = sections.map(s =>
+    `Section: ${s.name}\n
+    Description: ${s.description}\n
+    Research Needed: ${s.research ? 'Yes' : 'No'}\n`,
+  ).join('\n')
+
+  const interruptMessage = `Please provide feedback on the following report plan.\n
+  \n${sectionsStr}\n
+  Does the report plan meet your needs?\nPass 'true' to approve the report plan.\nOr, provide feedback to regenerate the report plan`
+
+  const feedback = interrupt(interruptMessage)
+  if (feedback.toLowerCase() === 'true') {
+    const sends: Send[] = []
+    for (const section of sections) {
+      if (section.research) {
+        sends.push(new Send('buildSectionWithWebResearch', { topic, section, search_iterations: 0 }))
+      }
+    }
+    return new Command({
+      goto: sends,
+    })
+  }
+  else {
+    return new Command({
+      goto: 'generateReportPlan',
+      update: { feedbackOnReportPlan: feedback },
+    })
+  }
 }
