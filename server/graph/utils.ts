@@ -1,4 +1,5 @@
 import type { TavilySearchResponse } from '@tavily/core'
+import process from 'node:process'
 import { tavily } from '@tavily/core'
 import { consola } from 'consola'
 import { SearchAPI } from './configuration'
@@ -188,4 +189,5 @@ function formatSource(sourceList: TavilySearchResult[], includeRawContent: boole
       formattedText += `Full source content limited to ${maxTokensPerSource} tokens: ${rawContent}\n\n`
     }
   }
+  return formattedText
 }
