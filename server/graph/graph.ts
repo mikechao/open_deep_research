@@ -1,16 +1,15 @@
-import { RunnableConfig } from "@langchain/core/runnables";
-import { ReportState, Sections } from "./state";
-import { ensureDeepResearchConfiguration } from "./configuration";
-import { getSearchParams, selectAndExecuteSearch } from "./utils";
+import type { RunnableConfig } from '@langchain/core/runnables'
+import type { ReportState } from './state'
+import { HumanMessage, SystemMessage } from '@langchain/core/messages'
+import { PromptTemplate } from '@langchain/core/prompts'
 import { initChatModel } from 'langchain/chat_models/universal'
-import { Queries } from "./state";
-import { report_planner_query_writer_instructions, report_planner_instructions} from "./prompts"
-import { ChatPromptTemplate, PromptTemplate } from '@langchain/core/prompts'
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { ensureDeepResearchConfiguration } from './configuration'
+import { report_planner_instructions, report_planner_query_writer_instructions } from './prompts'
+import { QueriesOutput, SectionsOutput } from './structuredOutputs'
+import { getSearchParams, selectAndExecuteSearch } from './utils'
 
 /**
  * Generate the initial report plan with sections.
-    
     This node:
     1. Gets configuration for the report structure and search parameters
     2. Generates search queries to gather context for planning
@@ -35,14 +34,14 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
   const writerProvider = configurable.writer_provider
   const writerModelName = configurable.writer_model
   const writerModel = await initChatModel(writerModelName, { modelProvider: writerProvider })
-  const structuredLLM = writerModel.withStructuredOutput(Queries)
+  const structuredLLM = writerModel.withStructuredOutput(QueriesOutput)
 
   const systemContent = await PromptTemplate.fromTemplate(report_planner_query_writer_instructions)
     .format({ topic, report_organization: reportStructure, number_of_queries: numberOfQueries })
 
   const results = await structuredLLM.invoke([
     new SystemMessage(systemContent),
-    new HumanMessage("Generate search queries that will help with planning the sections of the report.")
+    new HumanMessage('Generate search queries that will help with planning the sections of the report.'),
   ])
   // web search
   const queryList = results.queries.map(q => q.searchQuery)
@@ -52,7 +51,7 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
 
   // format the system instructions
   const systemInstructionSections = await PromptTemplate.fromTemplate(report_planner_instructions)
-    .format({topic, report_organization: reportStructure, context: sourceStr, feedback: feedbackOnReportPlan})
+    .format({ topic, report_organization: reportStructure, context: sourceStr, feedback: feedbackOnReportPlan })
 
   // Set the planner
   const plannerProvider = configurable.planner_provider
@@ -60,19 +59,20 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
 
   const plannerMessage = `Generate the sections of the report. Your response must include a 'sections' field containing a list of sections. 
                       Each section must have: name, description, plan, research, and content fields.`
-  
+
   let plannerLLM
   if (plannerModel === 'claude-3-7-sonnet-latest') {
-    plannerLLM = await initChatModel(plannerModel, { modelProvider: plannerProvider, maxTokens: 20000, thinking: {"type": "enabled", "budget_tokens": 16000} })
-  } else {
+    plannerLLM = await initChatModel(plannerModel, { modelProvider: plannerProvider, maxTokens: 20000, thinking: { type: 'enabled', budget_tokens: 16000 } })
+  }
+  else {
     plannerLLM = await initChatModel(plannerModel, { modelProvider: plannerProvider })
   }
-  const structuredPlannerLLM = plannerLLM.withStructuredOutput(Sections)
+  const structuredPlannerLLM = plannerLLM.withStructuredOutput(SectionsOutput)
   const reportSections = await structuredPlannerLLM.invoke([
     new SystemMessage(systemInstructionSections),
-    new HumanMessage(plannerMessage)
+    new HumanMessage(plannerMessage),
   ])
 
   const sections = reportSections.sections
-  return { sections: sections}
+  return { sections }
 }
