@@ -11,10 +11,10 @@ export const SectionsOutput = z.object({
   sections: z.array(SectionOutput).describe('Sections of the report.'),
 })
 
-const SearchQuery = z.object({
+export const SearchQueryOutput = z.object({
   searchQuery: z.string().describe('Query for web search.'),
 })
 
 export const QueriesOutput = z.object({
-  queries: z.array(SearchQuery).describe('List of search queries.'),
+  queries: z.array(SearchQueryOutput).describe('List of search queries.'),
 })

@@ -1,11 +1,11 @@
 import type { RunnableConfig } from '@langchain/core/runnables'
-import type { ReportState } from './state'
+import type { ReportState, SectionState } from './state'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { Command, interrupt, Send } from '@langchain/langgraph'
 import { initChatModel } from 'langchain/chat_models/universal'
 import { ensureDeepResearchConfiguration } from './configuration'
-import { report_planner_instructions, report_planner_query_writer_instructions } from './prompts'
+import { query_writer_instructions, report_planner_instructions, report_planner_query_writer_instructions } from './prompts'
 import { QueriesOutput, SectionsOutput } from './structuredOutputs'
 import { getSearchParams, selectAndExecuteSearch } from './utils'
 
@@ -120,4 +120,40 @@ function humanFeedback(state: typeof ReportState.State, _config: RunnableConfig)
       update: { feedbackOnReportPlan: feedback },
     })
   }
+}
+
+/**
+ * Generate search queries for researching a specific section.
+ *
+ * This node uses an LLM to generate targeted search queries based on the
+ * section topic and description.
+ * @param state Current state containing section details
+ * @param config Configuration including number of queries to generate
+ */
+async function generateQueries(state: typeof SectionState.State, config: RunnableConfig) {
+  const topic = state.topic
+  const section = state.section
+
+  const configurable = ensureDeepResearchConfiguration(config)
+  const numberOfQueries = configurable.number_of_queries
+
+  // Generate Queries
+  const writerProvider = configurable.writer_provider
+  const writerModelName = configurable.writer_model
+  const writerModel = await initChatModel(writerModelName, { modelProvider: writerProvider })
+  const structuredLLM = writerModel.withStructuredOutput(QueriesOutput)
+
+  // format the system instructions
+  const systemContent = await PromptTemplate.fromTemplate(query_writer_instructions).format({
+    topic,
+    section_topic: section.description,
+    number_of_queries: numberOfQueries,
+  })
+
+  // generate queries
+  const queries = await structuredLLM.invoke([
+    new SystemMessage(systemContent),
+    new HumanMessage('Generate search queries on the provided topic.'),
+  ])
+  return { search_queries: queries }
 }
