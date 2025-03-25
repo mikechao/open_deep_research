@@ -37,44 +37,45 @@ export function getSearchParams(searchAPI: SearchAPI, searchAPIConfig: Record<st
 
 export async function selectAndExecuteSearch(searchAPI: SearchAPI, queryList: string[], searchParams: Record<string, any>) {
   switch (searchAPI) {
-    case SearchAPI.EXA:
-      console.log('Executing EXA search with params:', searchParams)
+    case SearchAPI.EXA: {
+      consola.log('Executing EXA search with params:', searchParams)
       return executeExaSearch(queryList, searchParams)
-
-    case SearchAPI.TAVILY:
-      console.log('Executing Tavily search with params:', searchParams)
+    }
+    case SearchAPI.TAVILY: {
+      consola.log('Executing Tavily search with params:', searchParams)
       const searchResults = await executeTavilySearch(queryList, searchParams)
       const deduplicatedResults = deduplicateSources(searchResults)
       const formattedSources = formatSource(deduplicatedResults, true, 4000)
       return formattedSources
-
-    case SearchAPI.PERPLEXITY:
-      console.log('Executing Perplexity search with params:', searchParams)
+    }
+    case SearchAPI.PERPLEXITY: {
+      consola.log('Executing Perplexity search with params:', searchParams)
       return executePerplexitySearch(queryList, searchParams)
-
-    case SearchAPI.ARXIV:
-      console.log('Executing ArXiv search with params:', searchParams)
+    }
+    case SearchAPI.ARXIV: {
+      consola.log('Executing ArXiv search with params:', searchParams)
       return executeArxivSearch(queryList, searchParams)
-
-    case SearchAPI.PUBMED:
-      console.log('Executing PubMed search with params:', searchParams)
+    }
+    case SearchAPI.PUBMED: {
+      consola.log('Executing PubMed search with params:', searchParams)
       return executePubmedSearch(queryList, searchParams)
-
-    case SearchAPI.LINKUP:
-      console.log('Executing LinkUp search with params:', searchParams)
+    }
+    case SearchAPI.LINKUP: {
+      consola.log('Executing LinkUp search with params:', searchParams)
       return executeLinkupSearch(queryList, searchParams)
-
-    case SearchAPI.DUCKDUCKGO:
-      console.log('Executing DuckDuckGo search with params:', searchParams)
+    }
+    case SearchAPI.DUCKDUCKGO: {
+      consola.log('Executing DuckDuckGo search with params:', searchParams)
       return executeDuckDuckGoSearch(queryList, searchParams)
-
-    case SearchAPI.GOOGLESEARCH:
-      console.log('Executing Google search with params:', searchParams)
+    }
+    case SearchAPI.GOOGLESEARCH: {
+      consola.log('Executing Google search with params:', searchParams)
       return executeGoogleSearch(queryList, searchParams)
-
-    default:
+    }
+    default: {
       console.error(`Unsupported search API: ${searchAPI}`)
       throw new Error(`Unsupported search API: ${searchAPI}`)
+    }
   }
 }
 
