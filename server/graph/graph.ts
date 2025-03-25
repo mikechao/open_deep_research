@@ -48,7 +48,7 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
   const queryList = results.queries.map(q => q.searchQuery)
 
   // search the web with parameters
-  const sourceStr = selectAndExecuteSearch(searchAPI, queryList, searchParamsToPass)
+  const sourceStr = await selectAndExecuteSearch(searchAPI, queryList, searchParamsToPass)
 
   // format the system instructions
   const systemInstructionSections = await PromptTemplate.fromTemplate(report_planner_instructions)
