@@ -1,11 +1,12 @@
 import type { RunnableConfig } from '@langchain/core/runnables'
-import type { ReportState, SectionState } from './state'
+import type { SectionState } from './state'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { PromptTemplate } from '@langchain/core/prompts'
-import { Command, interrupt, Send } from '@langchain/langgraph'
+import { Command, END, interrupt, Send, START, StateGraph } from '@langchain/langgraph'
 import { initChatModel } from 'langchain/chat_models/universal'
 import { ensureDeepResearchConfiguration } from './configuration'
 import { query_writer_instructions, report_planner_instructions, report_planner_query_writer_instructions } from './prompts'
+import { ReportState } from './state'
 import { QueriesOutput, SectionsOutput } from './structuredOutputs'
 import { getSearchParams, selectAndExecuteSearch } from './utils'
 
@@ -157,3 +158,21 @@ async function generateQueries(state: typeof SectionState.State, config: Runnabl
   ])
   return { search_queries: queries }
 }
+
+function buildSectionWithWebResearch(_state: typeof ReportState.State, _config: RunnableConfig) {
+  // doing thing
+  return {}
+}
+
+const builder = new StateGraph(ReportState)
+// Add nodes
+  .addNode('generateReportPlan', generateReportPlan)
+  .addNode('humanFeedback', humanFeedback)
+  .addNode('buildSectionWithWebResearch', buildSectionWithWebResearch)
+
+// Add edges
+builder.addEdge(START, 'generateReportPlan')
+builder.addEdge('generateReportPlan', 'humanFeedback')
+builder.addEdge('buildSectionWithWebResearch', END)
+
+export const graph = builder.compile()
