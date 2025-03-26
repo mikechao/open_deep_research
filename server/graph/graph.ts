@@ -151,8 +151,11 @@ async function generateQueries(state: typeof SectionState.State, config: Runnabl
     number_of_queries: numberOfQueries,
   })
 
+  const sLLMWithRetry =  structuredLLM.withRetry({ 
+    stopAfterAttempt: 2,
+  })
   // generate queries
-  const result = await structuredLLM.invoke([
+  const result = await sLLMWithRetry.invoke([
     new SystemMessage(systemContent),
     new HumanMessage('Generate search queries on the provided topic.'),
   ])
