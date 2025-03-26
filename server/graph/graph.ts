@@ -1,5 +1,4 @@
 import type { RunnableConfig } from '@langchain/core/runnables'
-import type { SectionState } from './state'
 import { format } from 'node:path'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { PromptTemplate } from '@langchain/core/prompts'
@@ -7,7 +6,7 @@ import { Command, END, interrupt, Send, START, StateGraph } from '@langchain/lan
 import { initChatModel } from 'langchain/chat_models/universal'
 import { ensureDeepResearchConfiguration } from './configuration'
 import { final_section_writer_instructions, query_writer_instructions, report_planner_instructions, report_planner_query_writer_instructions, section_grader_instructions, section_writer_inputs, section_writer_instructions } from './prompts'
-import { ReportState } from './state'
+import { ReportState, SectionOutputState, SectionState } from './state'
 import { FeedbackOutput, QueriesOutput, SectionsOutput } from './structuredOutputs'
 import { formatSections, getSearchParams, selectAndExecuteSearch } from './utils'
 
@@ -378,10 +377,17 @@ function initiateFinalSectionWriting(state: typeof ReportState.State) {
   })
 }
 
-function buildSectionWithWebResearch(_state: typeof ReportState.State, _config: RunnableConfig) {
-  // doing thing
-  return {}
-}
+const sectionBuilder = new StateGraph({
+  input: SectionState,
+  output: SectionOutputState,
+})
+  .addNode('generateQueries', generateQueries)
+  .addNode('searchWeb', searchWeb)
+  .addNode('writeSection', writeSection)
+
+sectionBuilder.addEdge(START, 'generateQueries')
+sectionBuilder.addEdge('generateQueries', 'searchWeb')
+sectionBuilder.addEdge('searchWeb', 'writeSection')
 
 const builder = new StateGraph(ReportState)
 // Add nodes
@@ -389,11 +395,17 @@ const builder = new StateGraph(ReportState)
   .addNode('humanFeedback', humanFeedback, {
     ends: ['generateReportPlan', 'buildSectionWithWebResearch'],
   })
-  .addNode('buildSectionWithWebResearch', buildSectionWithWebResearch)
+  .addNode('buildSectionWithWebResearch', sectionBuilder.compile())
+  .addNode('gatherCompletedSections', gatherCompletedSections)
+  .addNode('writeFinalSections', writeFinalSections)
+  .addNode('compileFinalReport', compileFinalReport)
 
 // Add edges
 builder.addEdge(START, 'generateReportPlan')
 builder.addEdge('generateReportPlan', 'humanFeedback')
-builder.addEdge('buildSectionWithWebResearch', END)
+builder.addEdge('buildSectionWithWebResearch', 'gatherCompletedSections')
+builder.addConditionalEdges('gatherCompletedSections', 'initiateFinalSectionWriting')
+builder.addEdge('writeFinalSections', 'compileFinalReport')
+builder.addEdge('compileFinalReport', END)
 
 export const graph = builder.compile()

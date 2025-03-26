@@ -56,3 +56,10 @@ export const SectionState = Annotation.Root({
    */
   completed_sections: Annotation<Section[]>(),
 })
+
+export const SectionOutputState = Annotation.Root({
+  /**
+   * Final key we duplicate in outer state for Send() API
+   */
+  completed_sections: Annotation<Section[]>(),
+})
