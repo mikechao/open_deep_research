@@ -25,8 +25,8 @@ async function generateQueries(state: typeof SectionState.State, config: Runnabl
   const numberOfQueries = configurable.number_of_queries
 
   // Generate Queries
-  const writerProvider = configurable.writer_provider
-  const writerModelName = configurable.writer_model
+  const writerProvider = state.writer_provider
+  const writerModelName = state.writer_model
   const writerModel = await initChatModel(writerModelName, { modelProvider: writerProvider })
   const structuredLLM = writerModel.withStructuredOutput(QueriesOutput)
 

@@ -108,7 +108,14 @@ function humanFeedback(state: typeof ReportState.State, _config: RunnableConfig)
     const sends: Send[] = []
     for (const section of sections) {
       if (section.research) {
-        sends.push(new Send('buildSectionWithWebResearch', { topic, section, search_iterations: 0 }))
+        const send = new Send('buildSectionWithWebResearch', {
+          topic,
+          section,
+          search_iterations: 0,
+          writer_provider: 'openai',
+          writer_model: 'gpt-4o-mini',
+        })
+        sends.push(send)
       }
     }
     return new Command({

@@ -55,6 +55,14 @@ export const SectionState = Annotation.Root({
    * Final key we duplicate in outer state for Send() API
    */
   completed_sections: Annotation<Section[]>(),
+  /**
+   * The model provider for the writer
+   */
+  writer_provider: Annotation<string>(),
+  /**
+   * The model name for the writer
+   */
+  writer_model: Annotation<string>(),
 })
 
 export const SectionOutputState = Annotation.Root({
