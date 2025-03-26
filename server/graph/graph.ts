@@ -152,11 +152,11 @@ async function generateQueries(state: typeof SectionState.State, config: Runnabl
   })
 
   // generate queries
-  const queries = await structuredLLM.invoke([
+  const result = await structuredLLM.invoke([
     new SystemMessage(systemContent),
     new HumanMessage('Generate search queries on the provided topic.'),
   ])
-  return { search_queries: queries }
+  return { search_queries: result.queries }
 }
 
 /**
@@ -171,13 +171,16 @@ async function generateQueries(state: typeof SectionState.State, config: Runnabl
  */
 async function searchWeb(state: typeof SectionState.State, config: RunnableConfig) {
   const searchQueries = state.search_queries
-
+  console.log('searchQueries', searchQueries)
   const configurable = ensureDeepResearchConfiguration(config)
   const searchAPI = configurable.search_api
   const searchAPIConfig = configurable.search_api_config
   const searchParamsToPass = getSearchParams(searchAPI, searchAPIConfig)
 
-  const queryList = searchQueries.map(q => q.searchQuery)
+  const queryList = []
+  for (const query of searchQueries) {
+    queryList.push(query.searchQuery)
+  }
   const sourceStr = await selectAndExecuteSearch(searchAPI, queryList, searchParamsToPass)
 
   const search_iterations = state.search_iterations + 1
