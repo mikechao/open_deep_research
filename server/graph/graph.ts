@@ -5,7 +5,7 @@ import { PromptTemplate } from '@langchain/core/prompts'
 import { Command, END, interrupt, Send, START, StateGraph } from '@langchain/langgraph'
 import { initChatModel } from 'langchain/chat_models/universal'
 import { ensureDeepResearchConfiguration } from './configuration'
-import { query_writer_instructions, report_planner_instructions, report_planner_query_writer_instructions, section_grader_instructions, section_writer_inputs, section_writer_instructions } from './prompts'
+import { final_section_writer_instructions, query_writer_instructions, report_planner_instructions, report_planner_query_writer_instructions, section_grader_instructions, section_writer_inputs, section_writer_instructions } from './prompts'
 import { ReportState } from './state'
 import { FeedbackOutput, QueriesOutput, SectionsOutput } from './structuredOutputs'
 import { getSearchParams, selectAndExecuteSearch } from './utils'
@@ -274,6 +274,44 @@ If the grade is 'fail', provide specific search queries to gather missing inform
       update: { search_queries: feedback.followUpQueries, section },
     })
   }
+}
+
+/**
+ * Write sections that don't require research using completed sections as context.
+ *
+ * This node handles sections like conclusions or summaries that build on
+ * the researched sections rather than requiring direct research.
+ *
+ * @param state Current state with completed sections as context
+ * @param config Configuration for the writing model
+ */
+async function writeFinalSections(state: typeof SectionState.State, config: RunnableConfig) {
+  const configurable = ensureDeepResearchConfiguration(config)
+
+  const topic = state.topic
+  const section = state.section
+  const completedReportSections = state.report_sections_from_research
+
+  const systemInstructions = await PromptTemplate.fromTemplate(final_section_writer_instructions).format({
+    topic,
+    section_name: section.name,
+    section_topic: section.description,
+    context: completedReportSections,
+  })
+
+  const writerProvider = configurable.writer_provider
+  const writerModelName = configurable.writer_model
+  const writerModel = await initChatModel(writerModelName, { modelProvider: writerProvider })
+
+  const sectionContent = await writerModel.invoke([
+    new SystemMessage(systemInstructions),
+    new HumanMessage(`Generate a report section based on the provided sources.`),
+  ])
+
+  // not sure if sectionContent.content or sectionContent.text
+  section.content = sectionContent.text
+
+  return { completed_sections: section }
 }
 
 function buildSectionWithWebResearch(_state: typeof ReportState.State, _config: RunnableConfig) {
