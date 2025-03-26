@@ -354,6 +354,30 @@ function compileFinalReport(state: typeof ReportState.State) {
   return { finalReport: allSections }
 }
 
+/**
+ * Create parallel tasks for writing non-research sections.
+ *
+ * This edge function identifies sections that don't need research and
+    creates parallel writing tasks for each one.
+ * @param state
+ */
+function initiateFinalSectionWriting(state: typeof ReportState.State) {
+  const topic = state.topic
+  const sections = state.sections
+
+  const sends: Send[] = []
+
+  for (const s of sections) {
+    if (!s.research) {
+      sends.push(new Send('writeFinalSections', { topic, section: s, report_sections_from_research: state.reportSectionsFromResearch }))
+    }
+  }
+
+  return new Command({
+    goto: sends,
+  })
+}
+
 function buildSectionWithWebResearch(_state: typeof ReportState.State, _config: RunnableConfig) {
   // doing thing
   return {}
