@@ -328,6 +328,32 @@ function gatherCompletedSections(state: typeof ReportState.State) {
   return { report_sections_from_research: completeReportSections }
 }
 
+/**
+ * Compile all sections into the final report.
+ *
+ * This node:
+    1. Gets all completed sections
+    2. Orders them according to original plan
+    3. Combines them into the final report
+ * @param state
+ */
+function compileFinalReport(state: typeof ReportState.State) {
+  const sections = state.sections
+  const completedSections: Record<string, string> = {}
+  for (const s of state.completedSections) {
+    completedSections[s.name] = s.content
+  }
+
+  for (const section of sections) {
+    if (completedSections[section.name]) {
+      section.content = completedSections[section.name]
+    }
+  }
+
+  const allSections = sections.map(s => s.content).join('\n\n')
+  return { finalReport: allSections }
+}
+
 function buildSectionWithWebResearch(_state: typeof ReportState.State, _config: RunnableConfig) {
   // doing thing
   return {}
