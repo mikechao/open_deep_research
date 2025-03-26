@@ -159,6 +159,31 @@ async function generateQueries(state: typeof SectionState.State, config: Runnabl
   return { search_queries: queries }
 }
 
+/**
+ * Execute web searches for the section queries.
+ *
+ *This node:
+    1. Takes the generated queries
+    2. Executes searches using configured search API
+    3. Formats results into usable contex
+ * @param state Current state with search queries
+ * @param config Search API configuration
+ */
+async function searchWeb(state: typeof SectionState.State, config: RunnableConfig) {
+  const searchQueries = state.search_queries
+
+  const configurable = ensureDeepResearchConfiguration(config)
+  const searchAPI = configurable.search_api
+  const searchAPIConfig = configurable.search_api_config
+  const searchParamsToPass = getSearchParams(searchAPI, searchAPIConfig)
+
+  const queryList = searchQueries.map(q => q.searchQuery)
+  const sourceStr = await selectAndExecuteSearch(searchAPI, queryList, searchParamsToPass)
+
+  const search_iterations = state.search_iterations + 1
+  return { source_str: sourceStr, search_iterations }
+}
+
 function buildSectionWithWebResearch(_state: typeof ReportState.State, _config: RunnableConfig) {
   // doing thing
   return {}
