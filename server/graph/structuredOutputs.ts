@@ -18,3 +18,9 @@ export const SearchQueryOutput = z.object({
 export const QueriesOutput = z.object({
   queries: z.array(SearchQueryOutput).describe('List of search queries.'),
 })
+
+export const FeedbackOutput = z.object({
+  grade: z.union([z.literal('pass'), z.literal('fail')])
+    .describe(`Evaluation result indicating whether the response meets requirements ('pass') or needs revision ('fail')`),
+  followUpQueries: z.array(SearchQueryOutput).describe('List of follow-up search queries.'),
+})
