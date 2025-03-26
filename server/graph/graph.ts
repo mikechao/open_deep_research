@@ -397,6 +397,9 @@ const builder = new StateGraph(ReportState)
   })
   .addNode('buildSectionWithWebResearch', sectionBuilder.compile())
   .addNode('gatherCompletedSections', gatherCompletedSections)
+  .addNode('initiateFinalSectionWriting', initiateFinalSectionWriting, {
+    ends: ['writeFinalSections'],
+  })
   .addNode('writeFinalSections', writeFinalSections)
   .addNode('compileFinalReport', compileFinalReport)
 
@@ -404,7 +407,7 @@ const builder = new StateGraph(ReportState)
 builder.addEdge(START, 'generateReportPlan')
 builder.addEdge('generateReportPlan', 'humanFeedback')
 builder.addEdge('buildSectionWithWebResearch', 'gatherCompletedSections')
-builder.addConditionalEdges('gatherCompletedSections', 'initiateFinalSectionWriting')
+builder.addEdge('gatherCompletedSections', 'initiateFinalSectionWriting')
 builder.addEdge('writeFinalSections', 'compileFinalReport')
 builder.addEdge('compileFinalReport', END)
 
