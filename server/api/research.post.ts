@@ -1,7 +1,8 @@
 import { Command } from '@langchain/langgraph'
 import { consola } from 'consola'
 import { z } from 'zod'
-import { graph } from '../graph/graph'
+import { graphBuilder } from '../graph/graph'
+import { postgresCheckpointer } from '../utils/postgresCheckpointer'
 
 export default defineLazyEventHandler(async () => {
   const inputSchema = z.object({
@@ -22,6 +23,8 @@ export default defineLazyEventHandler(async () => {
       })
     }
     const { topic, sessionId, feedBack } = parsedBody.data
+    const checkpointer = await postgresCheckpointer()
+    const graph = graphBuilder.compile({ checkpointer })
     const threadConfig = { configurable: { thread_id: sessionId } }
     const input = feedBack.length > 0 ? new Command({ resume: feedBack }) : { topic }
     const result = await graph.invoke(input, threadConfig)

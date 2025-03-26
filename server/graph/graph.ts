@@ -246,4 +246,6 @@ builder.addEdge('gatherCompletedSections', 'initiateFinalSectionWriting')
 builder.addEdge('writeFinalSections', 'compileFinalReport')
 builder.addEdge('compileFinalReport', END)
 
+export const graphBuilder = builder
+
 export const graph = builder.compile()
