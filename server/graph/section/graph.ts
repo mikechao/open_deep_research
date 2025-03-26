@@ -102,8 +102,8 @@ async function writeSection(state: typeof SectionState.State, config: RunnableCo
 
   const configurable = ensureDeepResearchConfiguration(config)
   // generate section
-  const writerProvider = configurable.writer_provider
-  const writerModelName = configurable.writer_model
+  const writerProvider = state.writer_provider
+  const writerModelName = state.writer_model
   const writerModel = await initChatModel(writerModelName, { modelProvider: writerProvider })
 
   const sectionContent = await writerModel.invoke([
