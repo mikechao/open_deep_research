@@ -167,7 +167,9 @@ function buildSectionWithWebResearch(_state: typeof ReportState.State, _config: 
 const builder = new StateGraph(ReportState)
 // Add nodes
   .addNode('generateReportPlan', generateReportPlan)
-  .addNode('humanFeedback', humanFeedback)
+  .addNode('humanFeedback', humanFeedback, {
+    ends: ['generateReportPlan', 'buildSectionWithWebResearch'],
+  })
   .addNode('buildSectionWithWebResearch', buildSectionWithWebResearch)
 
 // Add edges
