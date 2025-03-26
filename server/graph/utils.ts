@@ -1,4 +1,5 @@
 import type { TavilySearchResponse } from '@tavily/core'
+import type { Section } from './state'
 import process from 'node:process'
 import { tavily } from '@tavily/core'
 import { consola } from 'consola'
@@ -190,4 +191,16 @@ function formatSource(sourceList: TavilySearchResult[], includeRawContent: boole
     }
   }
   return formattedText
+}
+
+export function formatSections(sections: Section[]) {
+  const formattedStr = sections.map((section, index) =>
+    `${'='.repeat(60)}\n`
+    + `Section ${index + 1}: ${section.name}\n`
+    + `${'='.repeat(60)}\n`
+    + `Description:\n${section.description}\n`
+    + `Requires Research:\n${section.research}\n\n`
+    + `Content:\n${section.content}\n`,
+  ).join('\n')
+  return formattedStr
 }

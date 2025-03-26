@@ -1,5 +1,6 @@
 import type { RunnableConfig } from '@langchain/core/runnables'
 import type { SectionState } from './state'
+import { format } from 'node:path'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { Command, END, interrupt, Send, START, StateGraph } from '@langchain/langgraph'
@@ -8,7 +9,7 @@ import { ensureDeepResearchConfiguration } from './configuration'
 import { final_section_writer_instructions, query_writer_instructions, report_planner_instructions, report_planner_query_writer_instructions, section_grader_instructions, section_writer_inputs, section_writer_instructions } from './prompts'
 import { ReportState } from './state'
 import { FeedbackOutput, QueriesOutput, SectionsOutput } from './structuredOutputs'
-import { getSearchParams, selectAndExecuteSearch } from './utils'
+import { formatSections, getSearchParams, selectAndExecuteSearch } from './utils'
 
 /**
  * Generate the initial report plan with sections.
@@ -312,6 +313,19 @@ async function writeFinalSections(state: typeof SectionState.State, config: Runn
   section.content = sectionContent.text
 
   return { completed_sections: section }
+}
+
+/**
+ * Format completed sections as context for writing final sections
+ *
+ * This node takes all completed research sections and formats them into
+    a single context string for writing summary sections.
+ * @param state Current state with completed sections
+ */
+function gatherCompletedSections(state: typeof ReportState.State) {
+  const completedSections = state.completedSections
+  const completeReportSections = formatSections(completedSections)
+  return { report_sections_from_research: completeReportSections }
 }
 
 function buildSectionWithWebResearch(_state: typeof ReportState.State, _config: RunnableConfig) {

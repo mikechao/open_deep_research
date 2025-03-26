@@ -19,7 +19,7 @@ export const ReportState = Annotation.Root({
    */
   sections: Annotation<Section[]>(),
 
-  completedSections: Annotation<string[]>(),
+  completedSections: Annotation<Section[]>(),
 
   reportSectionsFromResearch: Annotation<string>(),
 
