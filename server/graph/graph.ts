@@ -48,7 +48,7 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
     new SystemMessage(systemContent),
     new HumanMessage('Generate search queries that will help with planning the sections of the report.'),
   ])
-  consola.debug({ tag: 'generateReportPlan', message: `Generated queries: ${results.queries}` })
+  consola.debug({ tag: 'generateReportPlan', message: `Generated queries: ${JSON.stringify(results.queries)}` })
   // web search
   const queryList = results.queries.map(q => q.searchQuery)
 
@@ -78,7 +78,7 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
     new SystemMessage(systemInstructionSections),
     new HumanMessage(plannerMessage),
   ])
-  consola.debug({ tag: 'generateReportPlan', message: `Generated report sections: ${reportSections.sections}` })
+  consola.debug({ tag: 'generateReportPlan', message: `Generated report sections: ${JSON.stringify(reportSections.sections)}` })
   const sections = reportSections.sections
   return { sections }
 }
