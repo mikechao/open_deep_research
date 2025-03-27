@@ -3,6 +3,7 @@ import type { Section } from './state'
 import process from 'node:process'
 import { tavily } from '@tavily/core'
 import { consola } from 'consola'
+import { initChatModel } from 'langchain/chat_models/universal'
 import { SearchAPI } from './configuration'
 
 export function getSearchParams(searchAPI: SearchAPI, searchAPIConfig: Record<string, any>) {
@@ -203,4 +204,24 @@ export function formatSections(sections: Section[]) {
     + `Content:\n${section.content}\n`,
   ).join('\n')
   return formattedStr
+}
+
+export async function loadModel(modelName: string, modelProvider: string) {
+  if (modelName === 'claude-3-7-sonnet-latest') {
+    const model = await initChatModel(modelName, {
+      modelProvider,
+      maxTokens: 20000,
+      thinking: {
+        type: 'enabled',
+        budget_tokens: 16000,
+      },
+    })
+    return model
+  }
+  else {
+    const model = await initChatModel(modelName, {
+      modelProvider,
+    })
+    return model
+  }
 }

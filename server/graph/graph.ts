@@ -4,13 +4,12 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { Command, END, interrupt, Send, START, StateGraph } from '@langchain/langgraph'
 import { consola } from 'consola'
-import { initChatModel } from 'langchain/chat_models/universal'
 import { ensureDeepResearchConfiguration } from './configuration'
 import { final_section_writer_instructions, report_planner_instructions, report_planner_query_writer_instructions } from './prompts'
 import { graph as sectionGraph } from './section/graph'
 import { ReportState } from './state'
 import { QueriesOutput, SectionsOutput } from './structuredOutputs'
-import { formatSections, getSearchParams, selectAndExecuteSearch } from './utils'
+import { formatSections, getSearchParams, loadModel, selectAndExecuteSearch } from './utils'
 
 /**
  * Generate the initial report plan with sections.
@@ -36,9 +35,7 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
   const searchParamsToPass = getSearchParams(searchAPI, searchAPIConfig)
 
   // Set writer model (model used for query writing)
-  const writerProvider = configurable.writer_provider
-  const writerModelName = configurable.writer_model
-  const writerModel = await initChatModel(writerModelName, { modelProvider: writerProvider })
+  const writerModel = await loadModel(configurable.writer_model, configurable.writer_provider)
   const structuredLLM = writerModel.withStructuredOutput(QueriesOutput)
 
   const systemContent = await PromptTemplate.fromTemplate(report_planner_query_writer_instructions)
@@ -59,20 +56,10 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
   const systemInstructionSections = await PromptTemplate.fromTemplate(report_planner_instructions)
     .format({ topic, report_organization: reportStructure, context: sourceStr, feedback: feedbackOnReportPlan })
 
-  // Set the planner
-  const plannerProvider = configurable.planner_provider
-  const plannerModel = configurable.planner_model
-
   const plannerMessage = `Generate the sections of the report. Your response must include a 'sections' field containing a list of sections. 
                       Each section must have: name, description, plan, research, and content fields.`
-
-  let plannerLLM
-  if (plannerModel === 'claude-3-7-sonnet-latest') {
-    plannerLLM = await initChatModel(plannerModel, { modelProvider: plannerProvider, maxTokens: 20000, thinking: { type: 'enabled', budget_tokens: 16000 } })
-  }
-  else {
-    plannerLLM = await initChatModel(plannerModel, { modelProvider: plannerProvider })
-  }
+  // Set the planner
+  const plannerLLM = await loadModel(configurable.planner_model, configurable.planner_provider)
   const structuredPlannerLLM = plannerLLM.withStructuredOutput(SectionsOutput)
   const reportSections = await structuredPlannerLLM.invoke([
     new SystemMessage(systemInstructionSections),
@@ -160,9 +147,7 @@ async function writeFinalSections(state: typeof SectionState.State, config: Runn
     context: completedReportSections,
   })
 
-  const writerProvider = configurable.writer_provider
-  const writerModelName = configurable.writer_model
-  const writerModel = await initChatModel(writerModelName, { modelProvider: writerProvider })
+  const writerModel = await loadModel(configurable.writer_model, configurable.writer_provider)
 
   const sectionContent = await writerModel.invoke([
     new SystemMessage(systemInstructions),

@@ -3,12 +3,11 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { Command, END, START, StateGraph } from '@langchain/langgraph'
 import consola from 'consola'
-import { initChatModel } from 'langchain/chat_models/universal'
 import { ensureDeepResearchConfiguration } from '../configuration'
 import { query_writer_instructions, section_grader_instructions, section_writer_inputs, section_writer_instructions } from '../prompts'
 import { SectionOutputState, SectionState } from '../state'
 import { FeedbackOutput, QueriesOutput } from '../structuredOutputs'
-import { getSearchParams, selectAndExecuteSearch } from '../utils'
+import { getSearchParams, loadModel, selectAndExecuteSearch } from '../utils'
 
 /**
  * Generate search queries for researching a specific section.
@@ -26,9 +25,7 @@ async function generateQueries(state: typeof SectionState.State, config: Runnabl
   const numberOfQueries = configurable.number_of_queries
 
   // Generate Queries
-  const writerProvider = state.writer_provider
-  const writerModelName = state.writer_model
-  const writerModel = await initChatModel(writerModelName, { modelProvider: writerProvider })
+  const writerModel = await loadModel(state.writer_model, state.writer_provider)
   const structuredLLM = writerModel.withStructuredOutput(QueriesOutput)
 
   // format the system instructions
@@ -105,9 +102,7 @@ async function writeSection(state: typeof SectionState.State, config: RunnableCo
 
   const configurable = ensureDeepResearchConfiguration(config)
   // generate section
-  const writerProvider = state.writer_provider
-  const writerModelName = state.writer_model
-  const writerModel = await initChatModel(writerModelName, { modelProvider: writerProvider })
+  const writerModel = await loadModel(state.writer_model, state.writer_provider)
 
   const sectionContent = await writerModel.invoke([
     new SystemMessage(section_writer_instructions),
@@ -132,22 +127,7 @@ If the grade is 'fail', provide specific search queries to gather missing inform
 
   const plannerProvider = configurable.planner_provider
   const plannerModel = configurable.planner_model
-  let reflectionLLM
-  if (plannerModel === 'claude-3-7-sonnet-latest') {
-    reflectionLLM = await initChatModel(plannerModel, {
-      modelProvider: plannerProvider,
-      maxTokens: 20000,
-      thinking: {
-        type: 'enabled',
-        budget_tokens: 16000,
-      },
-    })
-  }
-  else {
-    reflectionLLM = await initChatModel(plannerModel, {
-      modelProvider: plannerProvider,
-    })
-  }
+  const reflectionLLM = await loadModel(plannerModel, plannerProvider)
   const structuredLLM = reflectionLLM.withStructuredOutput(FeedbackOutput)
 
   const feedback = await structuredLLM.invoke([
