@@ -184,7 +184,7 @@ async function writeFinalSections(state: typeof SectionState.State, config: Runn
  */
 function gatherCompletedSections(state: typeof ReportState.State) {
   consola.debug({ tag: 'gatherCompletedSections', message: 'Gathering completed sections for final report' })
-  const completedSections = state.completedSections
+  const completedSections = state.completed_sections
   const completeReportSections = formatSections(completedSections)
   return { report_sections_from_research: completeReportSections }
 }
@@ -202,7 +202,7 @@ function compileFinalReport(state: typeof ReportState.State) {
   consola.debug({ tag: 'compileFinalReport', message: 'Compiling final report' })
   const sections = state.sections
   const completedSections: Record<string, string> = {}
-  for (const s of state.completedSections) {
+  for (const s of state.completed_sections) {
     completedSections[s.name] = s.content
   }
 

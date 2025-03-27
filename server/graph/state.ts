@@ -19,7 +19,10 @@ export const ReportState = Annotation.Root({
    */
   sections: Annotation<Section[]>(),
 
-  completedSections: Annotation<Section[]>(),
+  completed_sections: Annotation<Section[]>({
+    default: () => [],
+    reducer: (old, newSections) => old.concat(newSections),
+  }),
 
   reportSectionsFromResearch: Annotation<string>(),
 
