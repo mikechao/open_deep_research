@@ -3,6 +3,7 @@ import type { SectionState } from './state'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { Command, END, interrupt, Send, START, StateGraph } from '@langchain/langgraph'
+import { consola } from 'consola'
 import { initChatModel } from 'langchain/chat_models/universal'
 import { ensureDeepResearchConfiguration } from './configuration'
 import { final_section_writer_instructions, report_planner_instructions, report_planner_query_writer_instructions } from './prompts'
@@ -10,6 +11,7 @@ import { graph as sectionGraph } from './section/graph'
 import { ReportState } from './state'
 import { QueriesOutput, SectionsOutput } from './structuredOutputs'
 import { formatSections, getSearchParams, selectAndExecuteSearch } from './utils'
+
 /**
  * Generate the initial report plan with sections.
  * This node:
@@ -23,6 +25,7 @@ import { formatSections, getSearchParams, selectAndExecuteSearch } from './utils
  */
 async function generateReportPlan(state: typeof ReportState.State, config: RunnableConfig) {
   const topic = state.topic
+  consola.debug({ tag: 'generateReportPlan', message: `Generating report plan for topic: ${topic}` })
   const feedbackOnReportPlan = state.feedbackOnReportPlan
 
   const configurable = ensureDeepResearchConfiguration(config)
@@ -45,6 +48,7 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
     new SystemMessage(systemContent),
     new HumanMessage('Generate search queries that will help with planning the sections of the report.'),
   ])
+  consola.debug({ tag: 'generateReportPlan', message: `Generated queries: ${results.queries}` })
   // web search
   const queryList = results.queries.map(q => q.searchQuery)
 
@@ -74,7 +78,7 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
     new SystemMessage(systemInstructionSections),
     new HumanMessage(plannerMessage),
   ])
-
+  consola.debug({ tag: 'generateReportPlan', message: `Generated report sections: ${reportSections.sections}` })
   const sections = reportSections.sections
   return { sections }
 }
@@ -92,6 +96,7 @@ async function generateReportPlan(state: typeof ReportState.State, config: Runna
  */
 function humanFeedback(state: typeof ReportState.State, _config: RunnableConfig) {
   const topic = state.topic
+  consola.debug({ tag: 'humanFeedback', message: `Getting feedback on report plan for topic: ${topic}` })
   const sections = state.sections
   const sectionsStr = sections.map(s =>
     `Section: ${s.name}\n
@@ -104,6 +109,7 @@ function humanFeedback(state: typeof ReportState.State, _config: RunnableConfig)
   Does the report plan meet your needs?\nPass 'true' to approve the report plan.\nOr, provide feedback to regenerate the report plan`
 
   const feedback = interrupt(interruptMessage)
+  consola.debug({ tag: 'humanFeedback', message: `Received feedback: ${feedback}` })
   if (feedback.toLowerCase() === 'true') {
     const sends: Send[] = []
     for (const section of sections) {
@@ -143,6 +149,7 @@ async function writeFinalSections(state: typeof SectionState.State, config: Runn
   const configurable = ensureDeepResearchConfiguration(config)
 
   const topic = state.topic
+  consola.debug({ tag: 'writeFinalSections', message: `Writing final sections for topic: ${topic}` })
   const section = state.section
   const completedReportSections = state.report_sections_from_research
 
@@ -176,6 +183,7 @@ async function writeFinalSections(state: typeof SectionState.State, config: Runn
  * @param state Current state with completed sections
  */
 function gatherCompletedSections(state: typeof ReportState.State) {
+  consola.debug({ tag: 'gatherCompletedSections', message: 'Gathering completed sections for final report' })
   const completedSections = state.completedSections
   const completeReportSections = formatSections(completedSections)
   return { report_sections_from_research: completeReportSections }
@@ -191,6 +199,7 @@ function gatherCompletedSections(state: typeof ReportState.State) {
  * @param state
  */
 function compileFinalReport(state: typeof ReportState.State) {
+  consola.debug({ tag: 'compileFinalReport', message: 'Compiling final report' })
   const sections = state.sections
   const completedSections: Record<string, string> = {}
   for (const s of state.completedSections) {
@@ -217,7 +226,7 @@ function compileFinalReport(state: typeof ReportState.State) {
 function initiateFinalSectionWriting(state: typeof ReportState.State) {
   const topic = state.topic
   const sections = state.sections
-
+  consola.debug({ tag: 'initiateFinalSectionWriting', message: `for topic: ${topic} and ${sections.length} sections` })
   const sends: Send[] = []
 
   for (const s of sections) {

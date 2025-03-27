@@ -2,6 +2,7 @@ import type { RunnableConfig } from '@langchain/core/runnables'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { Command, END, START, StateGraph } from '@langchain/langgraph'
+import consola from 'consola'
 import { initChatModel } from 'langchain/chat_models/universal'
 import { ensureDeepResearchConfiguration } from '../configuration'
 import { query_writer_instructions, section_grader_instructions, section_writer_inputs, section_writer_instructions } from '../prompts'
@@ -20,7 +21,7 @@ import { getSearchParams, selectAndExecuteSearch } from '../utils'
 async function generateQueries(state: typeof SectionState.State, config: RunnableConfig) {
   const topic = state.topic
   const section = state.section
-
+  consola.debug({ tag: 'generateQueries', message: `${new Date().toISOString()} Generating queries for section: ${section.name}` })
   const configurable = ensureDeepResearchConfiguration(config)
   const numberOfQueries = configurable.number_of_queries
 
@@ -60,6 +61,7 @@ async function generateQueries(state: typeof SectionState.State, config: Runnabl
  */
 async function searchWeb(state: typeof SectionState.State, config: RunnableConfig) {
   const searchQueries = state.search_queries
+  consola.debug({ tag: 'searchWeb', message: `${new Date().toISOString()} Searching the web for section queries` })
   const configurable = ensureDeepResearchConfiguration(config)
   const searchAPI = configurable.search_api
   const searchAPIConfig = configurable.search_api_config
@@ -89,6 +91,7 @@ async function searchWeb(state: typeof SectionState.State, config: RunnableConfi
 async function writeSection(state: typeof SectionState.State, config: RunnableConfig) {
   const topic = state.topic
   const section = state.section
+  consola.debug({ tag: 'writeSection', message: `${section.name}` })
   const sourceStr = state.source_str
 
   // format system instructions
@@ -151,7 +154,7 @@ If the grade is 'fail', provide specific search queries to gather missing inform
     new SystemMessage(sectionGraderInstructionsFormatted),
     new HumanMessage(sectionGraderMessage),
   ])
-
+  consola.debug({ tag: 'writeSection', message: `Feedback: ${feedback.grade}` })
   // if the section is passing or max search depth is reached, publish the section to completed sections
   if (feedback.grade === 'pass' || state.search_iterations >= configurable.max_search_depth) {
     return new Command({

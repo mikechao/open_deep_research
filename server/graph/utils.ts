@@ -44,7 +44,7 @@ export async function selectAndExecuteSearch(searchAPI: SearchAPI, queryList: st
       return executeExaSearch(queryList, searchParams)
     }
     case SearchAPI.TAVILY: {
-      consola.log('Executing Tavily search with params:', searchParams)
+      consola.debug(`Executing Tavily search with params: ${searchParams} for queries: ${queryList}`)
       const searchResults = await executeTavilySearch(queryList, searchParams)
       const deduplicatedResults = deduplicateSources(searchResults)
       const formattedSources = formatSource(deduplicatedResults, true, 4000)
