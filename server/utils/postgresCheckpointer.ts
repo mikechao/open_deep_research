@@ -1,13 +1,11 @@
 import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres'
 import consola from 'consola'
+import pg from 'pg'
 
 export async function postgresCheckpointer() {
-  const runtimeConfig = useRuntimeConfig()
-
   try {
-    const checkpointer = PostgresSaver.fromConnString(
-      runtimeConfig.postgresURL,
-    )
+    const pool = getPool()
+    const checkpointer = new PostgresSaver(pool)
     await checkpointer.setup()
     return checkpointer
   }
@@ -27,4 +25,20 @@ export async function postgresCheckpointer() {
       message: 'Error setting up PostgresSaver.',
     })
   }
+}
+
+function getPool() {
+  const { Pool } = pg
+  const runtimeConfig = useRuntimeConfig()
+  const pool = new Pool({
+    host: runtimeConfig.dbHost,
+    user: runtimeConfig.dbUser,
+    password: runtimeConfig.dbPassword,
+    database: runtimeConfig.dbName,
+    port: Number(runtimeConfig.dbPort),
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  })
+  return pool
 }
